@@ -177,7 +177,12 @@ func (s *posix) checkDiskFree() (err error) {
 	// are allocated based on available disk space. For example CephFS, StoreNext CVFS, AzureFile driver.
 	// Allow for the available disk to be separately validate and we will validate inodes only if
 	// total inodes are provided by the underlying filesystem.
-	if di.Files != 0 {
+	//
+	// EDIT: detect VirtualBox's fake inode count. VirtualBox provides a constant value of 1000 for free
+	// inodes via the vboxsf system. This number is meaningless and never changes. This means that it's
+	// not useful to compare it to the minimum free inode count above. Hopefully nobody ends up actually
+	// having exactly 1000 free inodes.
+	if di.Files != 0 && di.Ffree != 1000 {
 		availableFiles := int64(di.Ffree)
 		if availableFiles <= s.minFreeInodes {
 			return errDiskFull
